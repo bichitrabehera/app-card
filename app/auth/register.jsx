@@ -63,8 +63,6 @@ const Register = () => {
         username: username.trim(),
         email: email.trim().toLowerCase(),
         password: password,
-        bio: null,  // Explicitly set optional fields
-        dob: null   // Explicitly set optional fields
       };
       
       await register(payload);
