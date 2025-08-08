@@ -51,11 +51,22 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (data) => {
     try {
-      await axios.post(`${API_URL}/auth/register`, data);
+      const response = await axios.post(`${API_URL}/auth/register`, data);
+      console.log("Registration successful:", response.data);
       return await login(data.email, data.password);
     } catch (error) {
-      console.error("Registration error:", error);
-      throw error;
+      console.error("Registration error:", error.response?.data || error.message);
+      
+      // Enhance error message for better user feedback
+      if (error.response?.data?.detail) {
+        throw new Error(error.response.data.detail);
+      } else if (error.response?.status === 400) {
+        throw new Error(error.response.data?.detail || "Invalid registration data");
+      } else if (error.response?.status === 500) {
+        throw new Error("Server error. Please try again later.");
+      } else {
+        throw new Error("Registration failed. Please check your connection and try again.");
+      }
     }
   };
 

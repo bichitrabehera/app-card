@@ -20,7 +20,7 @@ const Register = () => {
   const router = useRouter();
 
   const [formData, setFormData] = useState({
-    name: "",
+    username: "",
     email: "",
     password: "",
   });
@@ -35,9 +35,9 @@ const Register = () => {
   };
 
   const handleRegister = async () => {
-    const { name, email, password } = formData;
+    const { username, email, password } = formData;
 
-    if (!name || !email || !password) {
+    if (!username || !email || !password) {
       setError("All fields are required");
       return;
     }
@@ -47,16 +47,57 @@ const Register = () => {
       return;
     }
 
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError("Please enter a valid email address");
+      return;
+    }
+
     setLoading(true);
     setError("");
 
     try {
-      await register(formData);
+      // Ensure we're sending the correct payload
+      const payload = {
+        username: username.trim(),
+        email: email.trim().toLowerCase(),
+        password: password,
+        bio: null,  // Explicitly set optional fields
+        dob: null   // Explicitly set optional fields
+      };
+      
+      await register(payload);
       router.replace("/home");
     } catch (err) {
       console.error("Register error:", err);
-      const message =
-        err?.response?.data?.detail || "Registration failed. Try again.";
+      
+      // Handle validation errors properly
+      let message = "Registration failed. Try again.";
+      
+      if (err?.response?.data?.detail) {
+        const detail = err.response.data.detail;
+        
+        if (typeof detail === 'string') {
+          message = detail;
+        } else if (Array.isArray(detail)) {
+          // Handle array of validation errors
+          message = detail.map(error => {
+            if (typeof error === 'string') return error;
+            if (error?.msg) return error.msg;
+            if (error?.loc && error?.msg) return `${error.loc.join('.')}: ${error.msg}`;
+            return JSON.stringify(error);
+          }).join(', ');
+        } else if (typeof detail === 'object') {
+          // Handle object errors
+          message = detail.msg || detail.detail || JSON.stringify(detail);
+        }
+      } else if (err?.response?.status === 500) {
+        message = "Server error. Please try again later.";
+      } else if (err?.message) {
+        message = err.message;
+      }
+      
       setError(message);
     } finally {
       setLoading(false);
@@ -65,8 +106,8 @@ const Register = () => {
 
   const fields = [
     {
-      key: "name",
-      placeholder: "Full Name",
+      key: "username",
+      placeholder: "Username",
       icon: "person-outline",
       autoCapitalize: "words",
     },
