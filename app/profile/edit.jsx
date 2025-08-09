@@ -19,7 +19,7 @@ export default function EditProfile() {
 const { token } = useContext(AuthContext);
 console.log("Token from AuthContext:", token);
 
-  const [profile, setProfile] = useState({ name: "", email: "" });
+  const [profile, setProfile] = useState({ username: "", email: "" });
   const [socialLinks, setSocialLinks] = useState([]);
   const [portfolio, setPortfolio] = useState([]);
   const [workExperience, setWorkExperience] = useState([]);
@@ -58,57 +58,269 @@ console.log("Token from AuthContext:", token);
     fetchAll();
   }, [token]);
 
+  const validateData = () => {
+    const errors = [];
+    
+    // Validate profile
+    if (!profile.username?.trim()) {
+      errors.push("Username is required");
+    }
+    if (!profile.email?.trim()) {
+      errors.push("Email is required");
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profile.email)) {
+      errors.push("Please enter a valid email address");
+    }
+
+    // Validate social links
+    socialLinks.forEach((link, index) => {
+      if (link.platform?.trim() && !link.url?.trim()) {
+        errors.push(`Social link ${index + 1}: URL is required when platform is provided`);
+      }
+      if (link.url?.trim() && !link.platform?.trim()) {
+        errors.push(`Social link ${index + 1}: Platform is required when URL is provided`);
+      }
+    });
+
+    // Validate portfolio items
+    portfolio.forEach((item, index) => {
+      if (!item.title?.trim()) {
+        errors.push(`Portfolio item ${index + 1}: Title is required`);
+      }
+    });
+
+    // Validate work experience
+    workExperience.forEach((job, index) => {
+      if (!job.company_name?.trim()) {
+        errors.push(`Work experience ${index + 1}: Company name is required`);
+      }
+      if (!job.role?.trim()) {
+        errors.push(`Work experience ${index + 1}: Role is required`);
+      }
+    });
+
+    return errors;
+  };
+
   const saveAll = async () => {
+    // Validate data before saving
+    const validationErrors = validateData();
+    if (validationErrors.length > 0) {
+      Alert.alert(
+        "Validation Error", 
+        `Please fix the following issues:\n${validationErrors.join('\n')}`,
+        [{ text: "OK" }]
+      );
+      return;
+    }
+
     setSaving(true);
+    const errors = [];
+    const successes = [];
+
     try {
-      await axios.put(`${API_URL}/user/profile`, profile, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      // Prepare data for API calls
+      const cleanProfile = {
+        username: profile.username?.trim(),
+        email: profile.email?.trim(),
+        bio: profile.bio?.trim() || null,
+      };
 
-      await Promise.all(
-        socialLinks.map((link) => {
-          if (link.id) {
-            return axios.put(`${API_URL}/user/social-links/${link.id}`, link, {
-              headers: { Authorization: `Bearer ${token}` },
-            });
-          } else {
-            return axios.post(`${API_URL}/user/social-links`, link, {
-              headers: { Authorization: `Bearer ${token}` },
-            });
-          }
-        })
-      );
+      // Save profile first
+      try {
+        await axios.put(`${API_URL}/user/profile`, cleanProfile, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        successes.push("Profile updated successfully");
+      } catch (err) {
+        errors.push(`Profile: ${err.response?.data?.detail || err.message}`);
+      }
 
-      await Promise.all(
-        portfolio.map((item) =>
-          item.id
-            ? axios.put(`${API_URL}/user/portfolio/${item.id}`, item, {
+      // Save social links with better error handling
+      if (socialLinks.length > 0) {
+        const socialPromises = socialLinks.map(async (link, index) => {
+          try {
+            const cleanLink = {
+              platform_name: link.platform?.trim(),
+              link_url: link.url?.trim()
+            };
+            
+            if (!cleanLink.platform_name || !cleanLink.link_url) {
+              return { 
+                type: 'social', 
+                index, 
+                error: 'Both platform and URL are required',
+                platform: link.platform 
+              };
+            }
+
+            if (link.id) {
+              await axios.put(`${API_URL}/user/social-links/${link.id}`, cleanLink, {
                 headers: { Authorization: `Bearer ${token}` },
-              })
-            : axios.post(`${API_URL}/user/portfolio`, item, {
+              });
+              return { type: 'social', index, status: 'updated' };
+            } else {
+              await axios.post(`${API_URL}/user/social-links`, cleanLink, {
                 headers: { Authorization: `Bearer ${token}` },
-              })
-        )
-      );
-
-      await Promise.all(
-        workExperience.map((job) => {
-          if (job.id) {
-            return axios.put(`${API_URL}/user/work-experience/${job.id}`, job, {
-              headers: { Authorization: `Bearer ${token}` },
-            });
-          } else {
-            return axios.post(`${API_URL}/user/work-experience`, job, {
-              headers: { Authorization: `Bearer ${token}` },
-            });
+              });
+              return { type: 'social', index, status: 'created' };
+            }
+          } catch (err) {
+            return { 
+              type: 'social', 
+              index, 
+              error: err.response?.data?.detail || err.message,
+              platform: link.platform 
+            };
           }
-        })
-      );
+        });
 
-      Alert.alert("Success", "All data saved successfully.");
+        const socialResults = await Promise.all(socialPromises);
+        socialResults.forEach(result => {
+          if (result.error) {
+            errors.push(`Social link (${result.platform}): ${result.error}`);
+          } else {
+            successes.push(`Social link ${result.status} successfully`);
+          }
+        });
+      }
+
+      // Save portfolio items
+      if (portfolio.length > 0) {
+        const portfolioPromises = portfolio.map(async (item, index) => {
+          try {
+            const cleanPortfolio = {
+              title: item.title?.trim(),
+              description: item.description?.trim() || null,
+              media_url: item.media_url?.trim() || null
+            };
+
+            if (!cleanPortfolio.title) {
+              return { 
+                type: 'portfolio', 
+                index, 
+                error: 'Title is required',
+                title: item.title 
+              };
+            }
+
+            if (item.id) {
+              await axios.put(`${API_URL}/user/portfolio/${item.id}`, cleanPortfolio, {
+                headers: { Authorization: `Bearer ${token}` },
+              });
+              return { type: 'portfolio', index, status: 'updated' };
+            } else {
+              await axios.post(`${API_URL}/user/portfolio`, cleanPortfolio, {
+                headers: { Authorization: `Bearer ${token}` },
+              });
+              return { type: 'portfolio', index, status: 'created' };
+            }
+          } catch (err) {
+            return { 
+              type: 'portfolio', 
+              index, 
+              error: err.response?.data?.detail || err.message,
+              title: item.title 
+            };
+          }
+        });
+
+        const portfolioResults = await Promise.all(portfolioPromises);
+        portfolioResults.forEach(result => {
+          if (result.error) {
+            errors.push(`Portfolio item (${result.title}): ${result.error}`);
+          } else {
+            successes.push(`Portfolio item ${result.status} successfully`);
+          }
+        });
+      }
+
+      // Save work experience
+      if (workExperience.length > 0) {
+        const workPromises = workExperience.map(async (job, index) => {
+          try {
+            const cleanWork = {
+              company_name: job.company?.trim() || job.company_name?.trim(),
+              role: job.role?.trim(),
+              start_date: job.start_date,
+              end_date: job.end_date || null,
+              description: job.description?.trim() || null
+            };
+
+            if (!cleanWork.company_name) {
+              return { 
+                type: 'work', 
+                index, 
+                error: 'Company name is required',
+                company: job.company || job.company_name 
+              };
+            }
+
+            if (!cleanWork.role) {
+              return { 
+                type: 'work', 
+                index, 
+                error: 'Role is required',
+                company: job.company || job.company_name 
+              };
+            }
+
+            if (job.id) {
+              await axios.put(`${API_URL}/user/work-experience/${job.id}`, cleanWork, {
+                headers: { Authorization: `Bearer ${token}` },
+              });
+              return { type: 'work', index, status: 'updated' };
+            } else {
+              await axios.post(`${API_URL}/user/work-experience`, cleanWork, {
+                headers: { Authorization: `Bearer ${token}` },
+              });
+              return { type: 'work', index, status: 'created' };
+            }
+          } catch (err) {
+            return { 
+              type: 'work', 
+              index, 
+              error: err.response?.data?.detail || err.message,
+              company: job.company || job.company_name 
+            };
+          }
+        });
+
+        const workResults = await Promise.all(workPromises);
+        workResults.forEach(result => {
+          if (result.error) {
+            errors.push(`Work experience (${result.company}): ${result.error}`);
+          } else {
+            successes.push(`Work experience ${result.status} successfully`);
+          }
+        });
+      }
+
+      // Show appropriate message based on results
+      if (errors.length === 0) {
+        Alert.alert("Success", "All data saved successfully!");
+      } else if (successes.length > 0) {
+        Alert.alert(
+          "Partial Success", 
+          `${successes.length} items saved successfully.\n\nErrors:\n${errors.join('\n')}`,
+          [{ text: "OK" }]
+        );
+      } else {
+        Alert.alert(
+          "Save Failed", 
+          `Failed to save data:\n${errors.join('\n')}`,
+          [{ text: "OK" }]
+        );
+      }
+
+      console.log('Save results:', { successes, errors });
+
     } catch (err) {
-      Alert.alert("Error", "Failed to save all data.");
-      console.log(err.message);
+      console.error('Unexpected error in saveAll:', err);
+      Alert.alert(
+        "Error", 
+        `An unexpected error occurred: ${err.message || 'Please try again'}`,
+        [{ text: "OK" }]
+      );
     } finally {
       setSaving(false);
     }
@@ -152,9 +364,9 @@ console.log("Token from AuthContext:", token);
         <Text style={styles.sectionTitle}>Edit Profile</Text>
         <TextInput
           style={styles.input}
-          value={profile.name}
-          onChangeText={(text) => setProfile({ ...profile, name: text })}
-          placeholder="Name"
+          value={profile.username}
+          onChangeText={(text) => setProfile({ ...profile, username: text })}
+          placeholder="Username"
           placeholderTextColor="#888"
         />
         <TextInput
