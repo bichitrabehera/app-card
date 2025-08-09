@@ -4,7 +4,7 @@ import axios from "axios";
 import { API_URL } from "../../constants/api";
 import { useRouter } from "expo-router";
 
-const AuthContext = createContext();
+export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(null);
