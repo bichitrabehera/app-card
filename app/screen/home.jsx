@@ -6,6 +6,10 @@ const Home = () => {
 
   return (
     <View style={styles.container}>
+       <View style={styles.brandHeader}>
+              <Text style={styles.brandName}>TapCard</Text>
+            </View>
+      
       <TouchableOpacity style={styles.logoutButton} onPress={logout}>
         <Text style={styles.logoutText}>Logout</Text>
       </TouchableOpacity>
@@ -20,7 +24,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#1A1C24",
+    backgroundColor: "#000000ff",
     padding: 20,
   },
   logoutButton: {

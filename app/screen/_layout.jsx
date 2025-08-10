@@ -14,8 +14,8 @@ export default function Layout() {
             headerShown: false,
             // tabBarShowLabel: false, // 🔕 Hide labels
             tabBarStyle: {
-              backgroundColor: "#1A1C24",
-              borderTopColor: "#222",
+              backgroundColor: "#000000",
+              // borderTopColor: "#000000ff",
               elevation: 0,
               height: 60,
             },
@@ -26,7 +26,7 @@ export default function Layout() {
             },
           }}
           sceneContainerStyle={{
-            backgroundColor: "#1A1C24",
+            backgroundColor: "#000000",
           }}
         >
           <Tabs.Screen

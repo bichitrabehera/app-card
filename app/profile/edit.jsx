@@ -8,402 +8,278 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Alert,
+  Image,
 } from "react-native";
 import axios from "axios";
 import { API_URL } from "../../constants/api";
 import BackButton from "../../components/BackButton";
 import { AuthContext } from "../context/AuthContext";
+import { Ionicons } from '@expo/vector-icons';
+
+const DEFAULT_AVATAR = "https://i.imgur.com/mCHMpLT.png";
 
 export default function EditProfile() {
-  // const { token } = useContext(AuthContext);
   const { token } = useContext(AuthContext);
-  console.log("Token from AuthContext:", token);
-
-  const [profile, setProfile] = useState({ username: "", email: "" });
+  const [profile, setProfile] = useState({ 
+    username: "", 
+    email: "", 
+    bio: "", 
+    profile_picture: "",
+    full_name: ""
+  });
   const [socialLinks, setSocialLinks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    const fetchAll = async () => {
+    const fetchData = async () => {
       try {
-        console.log("Token:", token);
-        const res = await axios.get(`${API_URL}/user/profile`, {
+        setLoading(true);
+        
+        // Fetch profile data
+        const profileRes = await axios.get(`${API_URL}/user/profile`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setProfile(res.data);
+        setProfile(profileRes.data);
 
-        // const s = await axios.get(`${API_URL}/user/social-links`, {
-        //   headers: { Authorization: `Bearer ${token}` },
-        // });
-        // setSocialLinks(s.data);
+        // Fetch social links
+        const linksRes = await axios.get(`${API_URL}/user/social-links`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setSocialLinks(linksRes.data || []);
+        
       } catch (err) {
-        Alert.alert("Error", "Failed to load data.");
-        console.log(
-          "Axios error:",
-          err.response ? err.response.data : err.message
-        );
+        console.error("Fetch error:", err.response?.data || err.message);
+        Alert.alert("Error", "Failed to load profile data");
       } finally {
         setLoading(false);
       }
     };
-    fetchAll();
+    
+    fetchData();
   }, [token]);
 
-  const validateData = () => {
-    const errors = [];
-    
-    // Validate profile
-    if (!profile.username?.trim()) {
-      errors.push("Username is required");
+  const handleDeleteLink = async (linkId) => {
+    try {
+      await axios.delete(`${API_URL}/user/social-links/${linkId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      
+      setSocialLinks(socialLinks.filter(link => link.id !== linkId));
+      Alert.alert("Success", "Link deleted successfully");
+    } catch (err) {
+      console.error("Delete error:", err.response?.data || err.message);
+      Alert.alert("Error", "Failed to delete link");
     }
-    if (!profile.email?.trim()) {
-      errors.push("Email is required");
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profile.email)) {
-      errors.push("Please enter a valid email address");
-    }
+  };
 
-    // Validate social links
-    socialLinks.forEach((link, index) => {
-      if (link.platform?.trim() && !link.url?.trim()) {
-        errors.push(`Social link ${index + 1}: URL is required when platform is provided`);
-      }
-      if (link.url?.trim() && !link.platform?.trim()) {
-        errors.push(`Social link ${index + 1}: Platform is required when URL is provided`);
-      }
-    });
+  const addSocialLink = () => {
+    setSocialLinks([...socialLinks, { platform_name: "", link_url: "" }]);
+  };
 
-    // Validate portfolio items
-    portfolio.forEach((item, index) => {
-      if (!item.title?.trim()) {
-        errors.push(`Portfolio item ${index + 1}: Title is required`);
-      }
-    });
+  const updateSocialLink = (index, field, value) => {
+    const updatedLinks = [...socialLinks];
+    updatedLinks[index] = {
+      ...updatedLinks[index],
+      [field]: value
+    };
+    setSocialLinks(updatedLinks);
+  };
 
-    // Validate work experience
-    workExperience.forEach((job, index) => {
-      if (!job.company_name?.trim()) {
-        errors.push(`Work experience ${index + 1}: Company name is required`);
-      }
-      if (!job.role?.trim()) {
-        errors.push(`Work experience ${index + 1}: Role is required`);
-      }
-    });
-
-    return errors;
+  const removeSocialLink = (index) => {
+    const updatedLinks = [...socialLinks];
+    updatedLinks.splice(index, 1);
+    setSocialLinks(updatedLinks);
   };
 
   const saveAll = async () => {
-    // Validate data before saving
-    const validationErrors = validateData();
-    if (validationErrors.length > 0) {
-      Alert.alert(
-        "Validation Error", 
-        `Please fix the following issues:\n${validationErrors.join('\n')}`,
-        [{ text: "OK" }]
-      );
-      return;
-    }
-
     setSaving(true);
-    const errors = [];
-    const successes = [];
-
     try {
-      // Prepare data for API calls
-      const cleanProfile = {
-        username: profile.username?.trim(),
-        email: profile.email?.trim(),
-        bio: profile.bio?.trim() || null,
-      };
+      // Save profile
+      await axios.put(`${API_URL}/user/profile`, {
+        username: profile.username,
+        email: profile.email,
+        bio: profile.bio,
+        full_name: profile.full_name
+      }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-      // Save profile first
-      try {
-        await axios.put(`${API_URL}/user/profile`, cleanProfile, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        successes.push("Profile updated successfully");
-      } catch (err) {
-        errors.push(`Profile: ${err.response?.data?.detail || err.message}`);
-      }
+      // Save social links
+      const linksPromises = socialLinks.map(link => {
+        if (link.id) {
+          return axios.put(`${API_URL}/user/social-links/${link.id}`, {
+            platform_name: link.platform_name,
+            link_url: link.link_url
+          }, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+        } else {
+          return axios.post(`${API_URL}/user/social-links`, {
+            platform_name: link.platform_name,
+            link_url: link.link_url
+          }, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+        }
+      });
 
-      // Save social links with better error handling
-      if (socialLinks.length > 0) {
-        const socialPromises = socialLinks.map(async (link, index) => {
-          try {
-            const cleanLink = {
-              platform_name: link.platform?.trim(),
-              link_url: link.url?.trim()
-            };
-            
-            if (!cleanLink.platform_name || !cleanLink.link_url) {
-              return { 
-                type: 'social', 
-                index, 
-                error: 'Both platform and URL are required',
-                platform: link.platform 
-              };
-            }
-
-            if (link.id) {
-              await axios.put(`${API_URL}/user/social-links/${link.id}`, cleanLink, {
-                headers: { Authorization: `Bearer ${token}` },
-              });
-              return { type: 'social', index, status: 'updated' };
-            } else {
-              await axios.post(`${API_URL}/user/social-links`, cleanLink, {
-                headers: { Authorization: `Bearer ${token}` },
-              });
-              return { type: 'social', index, status: 'created' };
-            }
-          } catch (err) {
-            return { 
-              type: 'social', 
-              index, 
-              error: err.response?.data?.detail || err.message,
-              platform: link.platform 
-            };
-          }
-        });
-
-        const socialResults = await Promise.all(socialPromises);
-        socialResults.forEach(result => {
-          if (result.error) {
-            errors.push(`Social link (${result.platform}): ${result.error}`);
-          } else {
-            successes.push(`Social link ${result.status} successfully`);
-          }
-        });
-      }
-
-      // Save portfolio items
-      if (portfolio.length > 0) {
-        const portfolioPromises = portfolio.map(async (item, index) => {
-          try {
-            const cleanPortfolio = {
-              title: item.title?.trim(),
-              description: item.description?.trim() || null,
-              media_url: item.media_url?.trim() || null
-            };
-
-            if (!cleanPortfolio.title) {
-              return { 
-                type: 'portfolio', 
-                index, 
-                error: 'Title is required',
-                title: item.title 
-              };
-            }
-
-            if (item.id) {
-              await axios.put(`${API_URL}/user/portfolio/${item.id}`, cleanPortfolio, {
-                headers: { Authorization: `Bearer ${token}` },
-              });
-              return { type: 'portfolio', index, status: 'updated' };
-            } else {
-              await axios.post(`${API_URL}/user/portfolio`, cleanPortfolio, {
-                headers: { Authorization: `Bearer ${token}` },
-              });
-              return { type: 'portfolio', index, status: 'created' };
-            }
-          } catch (err) {
-            return { 
-              type: 'portfolio', 
-              index, 
-              error: err.response?.data?.detail || err.message,
-              title: item.title 
-            };
-          }
-        });
-
-        const portfolioResults = await Promise.all(portfolioPromises);
-        portfolioResults.forEach(result => {
-          if (result.error) {
-            errors.push(`Portfolio item (${result.title}): ${result.error}`);
-          } else {
-            successes.push(`Portfolio item ${result.status} successfully`);
-          }
-        });
-      }
-
-      // Save work experience
-      if (workExperience.length > 0) {
-        const workPromises = workExperience.map(async (job, index) => {
-          try {
-            const cleanWork = {
-              company_name: job.company?.trim() || job.company_name?.trim(),
-              role: job.role?.trim(),
-              start_date: job.start_date,
-              end_date: job.end_date || null,
-              description: job.description?.trim() || null
-            };
-
-            if (!cleanWork.company_name) {
-              return { 
-                type: 'work', 
-                index, 
-                error: 'Company name is required',
-                company: job.company || job.company_name 
-              };
-            }
-
-            if (!cleanWork.role) {
-              return { 
-                type: 'work', 
-                index, 
-                error: 'Role is required',
-                company: job.company || job.company_name 
-              };
-            }
-
-            if (job.id) {
-              await axios.put(`${API_URL}/user/work-experience/${job.id}`, cleanWork, {
-                headers: { Authorization: `Bearer ${token}` },
-              });
-              return { type: 'work', index, status: 'updated' };
-            } else {
-              await axios.post(`${API_URL}/user/work-experience`, cleanWork, {
-                headers: { Authorization: `Bearer ${token}` },
-              });
-              return { type: 'work', index, status: 'created' };
-            }
-          } catch (err) {
-            return { 
-              type: 'work', 
-              index, 
-              error: err.response?.data?.detail || err.message,
-              company: job.company || job.company_name 
-            };
-          }
-        });
-
-        const workResults = await Promise.all(workPromises);
-        workResults.forEach(result => {
-          if (result.error) {
-            errors.push(`Work experience (${result.company}): ${result.error}`);
-          } else {
-            successes.push(`Work experience ${result.status} successfully`);
-          }
-        });
-      }
-
-      // Show appropriate message based on results
-      if (errors.length === 0) {
-        Alert.alert("Success", "All data saved successfully!");
-      } else if (successes.length > 0) {
-        Alert.alert(
-          "Partial Success", 
-          `${successes.length} items saved successfully.\n\nErrors:\n${errors.join('\n')}`,
-          [{ text: "OK" }]
-        );
-      } else {
-        Alert.alert(
-          "Save Failed", 
-          `Failed to save data:\n${errors.join('\n')}`,
-          [{ text: "OK" }]
-        );
-      }
-
-      console.log('Save results:', { successes, errors });
-
+      await Promise.all(linksPromises);
+      Alert.alert("Success", "Profile updated successfully");
+      
     } catch (err) {
-      console.error('Unexpected error in saveAll:', err);
-      Alert.alert(
-        "Error", 
-        `An unexpected error occurred: ${err.message || 'Please try again'}`,
-        [{ text: "OK" }]
-      );
+      console.error("Save error:", err.response?.data || err.message);
+      Alert.alert("Error", "Failed to save changes");
     } finally {
       setSaving(false);
     }
   };
 
-  const addSocialLink = () => {
-    setSocialLinks([...socialLinks, { platform: "", url: "" }]);
-  };
-
-  const removeSocialLink = (index) => {
-    const updated = [...socialLinks];
-    updated.splice(index, 1);
-    setSocialLinks(updated);
-  };
-
   if (loading) {
     return (
-      <View style={styles.centerContent}>
-        <ActivityIndicator size="large" color="#fff" />
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#2b74e2" />
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <View style={styles.topBar}>
+      {/* Header */}
+      <View style={styles.header}>
         <BackButton />
-      </View>
-
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.sectionTitle}>Edit Profile</Text>
-        <TextInput
-          style={styles.input}
-          value={profile.username}
-          onChangeText={(text) => setProfile({ ...profile, username: text })}
-          placeholder="Username"
-          placeholderTextColor="#888"
-        />
-        <TextInput
-          style={styles.input}
-          value={profile.email}
-          onChangeText={(text) => setProfile({ ...profile, email: text })}
-          placeholder="Email"
-          placeholderTextColor="#888"
-        />
-
-        <Text style={styles.sectionTitle}>Social Links</Text>
-        {socialLinks.map((link, idx) => (
-          <View key={link.id || idx} style={styles.itemBlock}>
-            <TextInput
-              style={styles.input}
-              value={link.platform}
-              onChangeText={(text) => {
-                const updated = { ...link, platform: text };
-                const updatedList = [...socialLinks];
-                updatedList[idx] = updated;
-                setSocialLinks(updatedList);
-              }}
-              placeholder="Platform"
-              placeholderTextColor="#888"
-            />
-            <TextInput
-              style={styles.input}
-              value={link.url}
-              onChangeText={(text) => {
-                const updated = { ...link, url: text };
-                const updatedList = [...socialLinks];
-                updatedList[idx] = updated;
-                setSocialLinks(updatedList);
-              }}
-              placeholder="URL"
-              placeholderTextColor="#888"
-            />
-            <TouchableOpacity onPress={() => removeSocialLink(idx)}>
-              <Text style={styles.removeButtonText}>Remove</Text>
-            </TouchableOpacity>
-          </View>
-        ))}
-        <TouchableOpacity onPress={addSocialLink} style={styles.addButton}>
-          <Text style={styles.addButtonText}>+ Add Social Link</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.saveButton}
+        <Text style={styles.headerTitle}>Edit Profile</Text>
+        <TouchableOpacity 
           onPress={saveAll}
           disabled={saving}
+          style={styles.saveHeaderButton}
         >
-          <Text style={styles.saveButtonText}>
-            {saving ? "Saving..." : "Save All"}
-          </Text>
+          {saving ? (
+            <ActivityIndicator color="#2b74e2" size="small" />
+          ) : (
+            <Text style={styles.saveHeaderButtonText}>Done</Text>
+          )}
         </TouchableOpacity>
+      </View>
+
+      <ScrollView 
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Profile Picture */}
+        {/* <View style={styles.profilePictureContainer}>
+          <Image
+            source={{ uri: profile.profile_picture || DEFAULT_AVATAR }}
+            style={styles.profilePicture}
+          />
+          <TouchableOpacity style={styles.changePhotoButton}>
+            <Text style={styles.changePhotoText}>Change Photo</Text>
+          </TouchableOpacity>
+        </View> */}
+
+        {/* Profile Section */}
+        <View style={styles.section}>
+          <View style={styles.inputRow}>
+            <Text style={styles.inputLabel}>Username</Text>
+            <TextInput
+              style={styles.input}
+              value={profile.username}
+              onChangeText={(text) => setProfile({...profile, username: text})}
+              placeholder="yourusername"
+              placeholderTextColor="#666"
+              autoCapitalize="none"
+            />
+          </View>
+          
+          <View style={styles.inputRow}>
+            <Text style={styles.inputLabel}>Name</Text>
+            <TextInput
+              style={styles.input}
+              value={profile.full_name}
+              onChangeText={(text) => setProfile({...profile, full_name: text})}
+              placeholder="Your Name"
+              placeholderTextColor="#666"
+            />
+          </View>
+          
+          <View style={styles.inputRow}>
+            <Text style={styles.inputLabel}>Email</Text>
+            <TextInput
+              style={styles.input}
+              value={profile.email}
+              onChangeText={(text) => setProfile({...profile, email: text})}
+              placeholder="your@email.com"
+              placeholderTextColor="#666"
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+          </View>
+          
+          <View style={styles.inputRow}>
+            <Text style={styles.inputLabel}>Bio</Text>
+            <TextInput
+              style={[styles.input, styles.bioInput]}
+              value={profile.bio}
+              onChangeText={(text) => setProfile({...profile, bio: text})}
+              placeholder="Tell your story..."
+              placeholderTextColor="#666"
+              multiline
+              numberOfLines={3}
+            />
+          </View>
+        </View>
+
+        {/* Social Links Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Links</Text>
+            <TouchableOpacity 
+              onPress={addSocialLink} 
+              style={styles.addButton}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="add" size={24} color="#2b74e2" />
+            </TouchableOpacity>
+          </View>
+          
+          {socialLinks.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Ionicons name="link-outline" size={32} color="#333" />
+              <Text style={styles.emptyText}>No links added</Text>
+            </View>
+          ) : (
+            socialLinks.map((link, index) => (
+              <View key={link.id || index} style={styles.linkItem}>
+                <View style={styles.linkInputContainer}>
+                  <TextInput
+                    style={styles.platformInput}
+                    value={link.platform_name}
+                    onChangeText={(text) => updateSocialLink(index, 'platform_name', text)}
+                    placeholder="Platform (e.g. Instagram)"
+                    placeholderTextColor="#666"
+                  />
+                  <TextInput
+                    style={styles.urlInput}
+                    value={link.link_url}
+                    onChangeText={(text) => updateSocialLink(index, 'link_url', text)}
+                    placeholder="https://example.com"
+                    placeholderTextColor="#666"
+                    keyboardType="url"
+                    autoCapitalize="none"
+                  />
+                </View>
+                
+                <TouchableOpacity 
+                  onPress={() => link.id ? handleDeleteLink(link.id) : removeSocialLink(index)}
+                  style={styles.deleteButton}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons name="close" size={20} color="#ff4d4d" />
+                </TouchableOpacity>
+              </View>
+            ))
+          )}
+        </View>
       </ScrollView>
     </View>
   );
@@ -412,72 +288,156 @@ export default function EditProfile() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#1A1C24",
-    paddingTop: 40,
+    backgroundColor: '#000000',
   },
-  topBar: {
-    position: "absolute",
-    top: 10,
-    left: 20,
-    zIndex: 10,
-  },
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 40,
-  },
-  centerContent: {
+  loadingContainer: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#000000',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#222',
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  saveHeaderButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  saveHeaderButtonText: {
+    color: '#2b74e2',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  content: {
+    padding: 16,
+    paddingBottom: 32,
+  },
+  profilePictureContainer: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  profilePicture: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 2,
+    borderColor: '#2b74e2',
+  },
+  changePhotoButton: {
+    marginTop: 12,
+  },
+  changePhotoText: {
+    color: '#2b74e2',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  section: {
+    marginBottom: 24,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   sectionTitle: {
-    color: "#00BFFF",
-    fontSize: 20,
-    fontWeight: "bold",
-    marginTop: 20,
-    marginBottom: 10,
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  inputRow: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    color: '#999',
+    fontSize: 14,
+    marginBottom: 8,
+    marginLeft: 4,
   },
   input: {
-    backgroundColor: "#222",
-    color: "white",
-    padding: 10,
-    borderRadius: 6,
-    fontSize: 16,
-    marginBottom: 10,
-  },
-  saveButton: {
-    backgroundColor: "#00BFFF",
-    padding: 12,
-    borderRadius: 6,
-    alignItems: "center",
-    marginVertical: 20,
-  },
-  saveButtonText: {
-    color: "#111",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
-  itemBlock: {
+    backgroundColor: '#111',
+    borderRadius: 10,
+    padding: 14,
+    color: '#fff',
+    fontSize: 15,
     borderWidth: 1,
-    borderColor: "#444",
-    padding: 10,
-    borderRadius: 6,
-    marginBottom: 10,
+    borderColor: '#222',
+  },
+  bioInput: {
+    height: 100,
+    textAlignVertical: 'top',
   },
   addButton: {
-    backgroundColor: "#333",
-    padding: 10,
-    borderRadius: 6,
-    alignItems: "center",
-    marginBottom: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#111',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#2b74e2',
   },
-  addButtonText: {
-    color: "#00BFFF",
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 32,
+    backgroundColor: '#111',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#222',
+  },
+  emptyText: {
+    color: '#666',
     fontSize: 14,
+    marginTop: 8,
   },
-  removeButtonText: {
-    color: "#FF4C4C",
-    marginTop: 5,
+  linkItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  linkInputContainer: {
+    flex: 1,
+    backgroundColor: '#111',
+    borderRadius: 10,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#222',
+  },
+  platformInput: {
+    color: '#fff',
+    fontSize: 14,
+    marginBottom: 8,
+    padding: 8,
+    backgroundColor: '#1a1a1a',
+    borderRadius: 6,
+  },
+  urlInput: {
+    color: '#fff',
+    fontSize: 14,
+    padding: 8,
+    backgroundColor: '#1a1a1a',
+    borderRadius: 6,
+  },
+  deleteButton: {
+    marginLeft: 8,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#111',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ff4d4d',
   },
 });

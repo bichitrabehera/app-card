@@ -11,11 +11,11 @@ const SafeScreen = ({ children }) => {
         paddingTop: insets.top,
         paddingBottom: insets.bottom,
         flex: 1,
-        backgroundColor: "#1A1C24",
+        backgroundColor: "#000000",
         
       }}
     >
-      <StatusBar barStyle="light-content" backgroundColor="#1A1C24" />
+      <StatusBar barStyle="light-content" backgroundColor="#000000" />
       {children}
     </View>
   );

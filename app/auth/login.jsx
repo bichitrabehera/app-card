@@ -33,9 +33,9 @@ const Login = () => {
     setLoading(true);
     setError("");
     try {
-      console.log("Attempting login with:", email);
+      // console.log("Attempting login with:", email);
       await login(email, password);
-      console.log("Login successful, navigating to /home");
+      // console.log("Login successful, navigating to /home");
       router.replace("/screen/home");
     } catch (err) {
       console.error("Login error:", err);
