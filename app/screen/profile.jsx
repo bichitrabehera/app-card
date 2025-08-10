@@ -19,7 +19,7 @@ export default function Profile() {
   const [profile, setProfile] = useState(null);
   const [socialLinks, setSocialLinks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { token } = useAuth();
+  const { token, logout } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -88,6 +88,10 @@ export default function Profile() {
       {/* Brand Header */}
       <View style={styles.brandHeader}>
         <Text style={styles.brandName}>TapCard</Text>
+
+        <TouchableOpacity onPress={logout}>
+          <Ionicons name="log-out-outline" size={24} color="#e2402bff" />
+        </TouchableOpacity>
       </View>
 
       {/* Profile Section */}
@@ -224,24 +228,32 @@ const styles = StyleSheet.create({
     backgroundColor: "#000000",
   },
   brandHeader: {
-    paddingTop: 24,
-    paddingBottom: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: "#1a1a1a",
+    borderBottomColor: "#222", // subtle divider
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    marginBottom: 16,
   },
+
   brandName: {
     fontSize: 30,
+    fontWeight: "700",
+    color: "#fff",
+    letterSpacing: 0.5,
+    // textTransform: "uppercase",
     fontFamily: "cursive",
-    color: "#ffffffff",
-    textAlign: "left",
-    fontWeight: "bold",
-    marginLeft: 20,
   },
+
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#000000',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#000000",
   },
   centerContainer: {
     backgroundColor: "#000000",
