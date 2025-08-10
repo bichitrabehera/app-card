@@ -66,7 +66,7 @@ const Register = () => {
       };
       
       await register(payload);
-      router.replace("/home");
+      router.replace("/screen/home");
     } catch (err) {
       console.error("Register error:", err);
       
@@ -100,6 +100,8 @@ const Register = () => {
     } finally {
       setLoading(false);
     }
+
+    
   };
 
   const fields = [

@@ -12,45 +12,37 @@ import {
 import axios from "axios";
 import { API_URL } from "../../constants/api";
 import BackButton from "../../components/BackButton";
-import { AuthContext } from '../context/AuthContext';
+import { AuthContext } from "../context/AuthContext";
 
 export default function EditProfile() {
   // const { token } = useContext(AuthContext);
-const { token } = useContext(AuthContext);
-console.log("Token from AuthContext:", token);
+  const { token } = useContext(AuthContext);
+  console.log("Token from AuthContext:", token);
 
   const [profile, setProfile] = useState({ name: "", email: "" });
   const [socialLinks, setSocialLinks] = useState([]);
-  const [portfolio, setPortfolio] = useState([]);
-  const [workExperience, setWorkExperience] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const fetchAll = async () => {
       try {
+        console.log("Token:", token);
         const res = await axios.get(`${API_URL}/user/profile`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setProfile(res.data);
 
-        const s = await axios.get(`${API_URL}/user/social-links`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setSocialLinks(s.data);
-
-        const pf = await axios.get(`${API_URL}/user/portfolio`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setPortfolio(pf.data);
-
-        const w = await axios.get(`${API_URL}/user/work-experience`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setWorkExperience(w.data);
+        // const s = await axios.get(`${API_URL}/user/social-links`, {
+        //   headers: { Authorization: `Bearer ${token}` },
+        // });
+        // setSocialLinks(s.data);
       } catch (err) {
         Alert.alert("Error", "Failed to load data.");
-        console.log(err.message);
+        console.log(
+          "Axios error:",
+          err.response ? err.response.data : err.message
+        );
       } finally {
         setLoading(false);
       }
@@ -64,46 +56,6 @@ console.log("Token from AuthContext:", token);
       await axios.put(`${API_URL}/user/profile`, profile, {
         headers: { Authorization: `Bearer ${token}` },
       });
-
-      await Promise.all(
-        socialLinks.map((link) => {
-          if (link.id) {
-            return axios.put(`${API_URL}/user/social-links/${link.id}`, link, {
-              headers: { Authorization: `Bearer ${token}` },
-            });
-          } else {
-            return axios.post(`${API_URL}/user/social-links`, link, {
-              headers: { Authorization: `Bearer ${token}` },
-            });
-          }
-        })
-      );
-
-      await Promise.all(
-        portfolio.map((item) =>
-          item.id
-            ? axios.put(`${API_URL}/user/portfolio/${item.id}`, item, {
-                headers: { Authorization: `Bearer ${token}` },
-              })
-            : axios.post(`${API_URL}/user/portfolio`, item, {
-                headers: { Authorization: `Bearer ${token}` },
-              })
-        )
-      );
-
-      await Promise.all(
-        workExperience.map((job) => {
-          if (job.id) {
-            return axios.put(`${API_URL}/user/work-experience/${job.id}`, job, {
-              headers: { Authorization: `Bearer ${token}` },
-            });
-          } else {
-            return axios.post(`${API_URL}/user/work-experience`, job, {
-              headers: { Authorization: `Bearer ${token}` },
-            });
-          }
-        })
-      );
 
       Alert.alert("Success", "All data saved successfully.");
     } catch (err) {
@@ -122,16 +74,6 @@ console.log("Token from AuthContext:", token);
     const updated = [...socialLinks];
     updated.splice(index, 1);
     setSocialLinks(updated);
-  };
-
-  const addExperience = () => {
-    setWorkExperience([...workExperience, { role: "", company: "" }]);
-  };
-
-  const removeExperience = (index) => {
-    const updated = [...workExperience];
-    updated.splice(index, 1);
-    setWorkExperience(updated);
   };
 
   if (loading) {
@@ -199,72 +141,6 @@ console.log("Token from AuthContext:", token);
         ))}
         <TouchableOpacity onPress={addSocialLink} style={styles.addButton}>
           <Text style={styles.addButtonText}>+ Add Social Link</Text>
-        </TouchableOpacity>
-
-        <Text style={styles.sectionTitle}>Portfolio</Text>
-        {portfolio.map((item, idx) => (
-          <View key={item.id || idx} style={styles.itemBlock}>
-            <TextInput
-              style={styles.input}
-              value={item.title}
-              onChangeText={(text) => {
-                const updated = { ...item, title: text };
-                const updatedList = [...portfolio];
-                updatedList[idx] = updated;
-                setPortfolio(updatedList);
-              }}
-              placeholder="Title"
-              placeholderTextColor="#888"
-            />
-            <TextInput
-              style={styles.input}
-              value={item.description}
-              onChangeText={(text) => {
-                const updated = { ...item, description: text };
-                const updatedList = [...portfolio];
-                updatedList[idx] = updated;
-                setPortfolio(updatedList);
-              }}
-              placeholder="Description"
-              placeholderTextColor="#888"
-            />
-          </View>
-        ))}
-
-        <Text style={styles.sectionTitle}>Work Experience</Text>
-        {workExperience.map((job, idx) => (
-          <View key={job.id || idx} style={styles.itemBlock}>
-            <TextInput
-              style={styles.input}
-              value={job.role}
-              onChangeText={(text) => {
-                const updated = { ...job, role: text };
-                const updatedList = [...workExperience];
-                updatedList[idx] = updated;
-                setWorkExperience(updatedList);
-              }}
-              placeholder="Role"
-              placeholderTextColor="#888"
-            />
-            <TextInput
-              style={styles.input}
-              value={job.company}
-              onChangeText={(text) => {
-                const updated = { ...job, company: text };
-                const updatedList = [...workExperience];
-                updatedList[idx] = updated;
-                setWorkExperience(updatedList);
-              }}
-              placeholder="Company"
-              placeholderTextColor="#888"
-            />
-            <TouchableOpacity onPress={() => removeExperience(idx)}>
-              <Text style={styles.removeButtonText}>Remove</Text>
-            </TouchableOpacity>
-          </View>
-        ))}
-        <TouchableOpacity onPress={addExperience} style={styles.addButton}>
-          <Text style={styles.addButtonText}>+ Add Experience</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
