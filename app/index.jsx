@@ -94,7 +94,7 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#1A1C24",
+    backgroundColor: "#FFFFFF", // changed to white
     paddingHorizontal: 24,
     paddingVertical: 200,
     justifyContent: 'space-between'
@@ -103,26 +103,21 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: "#1A1C24",
+    backgroundColor: "#FFFFFF", // also changed to white
   },
   hero: {
     alignItems: 'center',
     marginTop: 20,
   },
-  logo: {
-    width: 100,
-    height: 100,
-    marginBottom: 20,
-  },
   title: {
     fontSize: 36,
     fontWeight: "700",
-    color: "#FFFFFF",
+    color: "#000000", // switched to black text
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 18,
-    color: "#AAAAAA",
+    color: "#444444", // darker gray for readability
     textAlign: "center",
     marginBottom: 40,
   },
@@ -133,7 +128,7 @@ const styles = StyleSheet.create({
   },
   featureCard: {
     width: '30%',
-    backgroundColor: '#252833',
+    backgroundColor: '#F5F5F5', // light gray card bg
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -143,12 +138,12 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   featureTitle: {
-    color: '#FFFFFF',
+    color: '#000000',
     fontWeight: '600',
     marginBottom: 4,
   },
   featureText: {
-    color: '#AAAAAA',
+    color: '#666666',
     fontSize: 12,
     textAlign: 'center',
   },
@@ -156,7 +151,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   ctaText: {
-    color: '#FFFFFF',
+    color: '#000000',
     fontSize: 16,
     marginBottom: 24,
     textAlign: 'center',
@@ -173,19 +168,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   buttonSecondary: {
-    borderColor: "#FFFFFF",
+    borderColor: "#000000", // black border now
     borderWidth: 1,
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: "center",
   },
   buttonText: {
-    color: "#FFFFFF",
+    color: "#000000", // black text for secondary button
     fontSize: 16,
     fontWeight: "600",
   },
   footerText: {
-    color: '#666666',
+    color: '#888888',
     fontSize: 12,
     textAlign: 'center',
   },

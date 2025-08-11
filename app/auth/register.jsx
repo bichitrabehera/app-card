@@ -9,7 +9,7 @@ import {
   Pressable,
   KeyboardAvoidingView,
   Platform,
-  TouchableOpacity
+  TouchableOpacity,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import { useRouter } from "expo-router";
@@ -64,29 +64,32 @@ const Register = () => {
         email: email.trim().toLowerCase(),
         password: password,
       };
-      
+
       await register(payload);
       router.replace("/screen/home");
     } catch (err) {
       console.error("Register error:", err);
-      
+
       // Handle validation errors properly
       let message = "Registration failed. Try again.";
-      
+
       if (err?.response?.data?.detail) {
         const detail = err.response.data.detail;
-        
-        if (typeof detail === 'string') {
+
+        if (typeof detail === "string") {
           message = detail;
         } else if (Array.isArray(detail)) {
           // Handle array of validation errors
-          message = detail.map(error => {
-            if (typeof error === 'string') return error;
-            if (error?.msg) return error.msg;
-            if (error?.loc && error?.msg) return `${error.loc.join('.')}: ${error.msg}`;
-            return JSON.stringify(error);
-          }).join(', ');
-        } else if (typeof detail === 'object') {
+          message = detail
+            .map((error) => {
+              if (typeof error === "string") return error;
+              if (error?.msg) return error.msg;
+              if (error?.loc && error?.msg)
+                return `${error.loc.join(".")}: ${error.msg}`;
+              return JSON.stringify(error);
+            })
+            .join(", ");
+        } else if (typeof detail === "object") {
           // Handle object errors
           message = detail.msg || detail.detail || JSON.stringify(detail);
         }
@@ -95,13 +98,11 @@ const Register = () => {
       } else if (err?.message) {
         message = err.message;
       }
-      
+
       setError(message);
     } finally {
       setLoading(false);
     }
-
-    
   };
 
   const fields = [
@@ -148,7 +149,9 @@ const Register = () => {
         {/* Logo and Header Section */}
         <View style={styles.header}>
           <Text style={styles.title}>Create Your Account</Text>
-          <Text style={styles.subtitle}>Join thousands of professionals using TapCard</Text>
+          <Text style={styles.subtitle}>
+            Join thousands of professionals using TapCard
+          </Text>
         </View>
 
         {/* Form Section */}
@@ -180,11 +183,7 @@ const Register = () => {
                   keyboardType={keyboardType}
                   autoCapitalize={autoCapitalize}
                 />
-                {rightIcon && (
-                  <View style={styles.rightIcon}>
-                    {rightIcon}
-                  </View>
-                )}
+                {rightIcon && <View style={styles.rightIcon}>{rightIcon}</View>}
               </View>
             )
           )}
@@ -192,7 +191,11 @@ const Register = () => {
           {error ? <Text style={styles.error}>{error}</Text> : null}
 
           <View style={styles.passwordHint}>
-            <Ionicons name="information-circle-outline" size={16} color="#888" />
+            <Ionicons
+              name="information-circle-outline"
+              size={16}
+              color="#888"
+            />
             <Text style={styles.hintText}>Use at least 6 characters</Text>
           </View>
 
@@ -219,7 +222,6 @@ const Register = () => {
           <View style={styles.dividerLine} />
         </View>
 
-
         {/* Footer Section */}
         <View style={styles.footer}>
           <Text style={styles.footerText}>Already have an account?</Text>
@@ -233,8 +235,6 @@ const Register = () => {
             <Text style={styles.loginButtonText}>Sign In</Text>
           </Pressable>
         </View>
-
-        
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -246,13 +246,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 24,
     paddingBottom: 40,
-    backgroundColor: "#1A1C24",
-  },
-  logo: {
-    width: 80,
-    height: 80,
-    marginBottom: 24,
-    alignSelf: 'center'
+    backgroundColor: "#FFFFFF", // White background
   },
   header: {
     marginBottom: 32,
@@ -260,13 +254,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: "700",
-    color: "#FFFFFF",
+    color: "#1A1C24", // Dark text for white background
     textAlign: "center",
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: "#AAAAAA",
+    color: "#666666",
     textAlign: "center",
     marginBottom: 8,
   },
@@ -276,16 +270,17 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#2A2C33",
+    backgroundColor: "#F5F5F5", // Light gray input background
     borderRadius: 12,
     paddingHorizontal: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: "#333",
+    borderColor: "#E0E0E0",
     height: 56,
   },
   icon: {
     marginRight: 12,
+    color: "#888888",
   },
   rightIcon: {
     marginLeft: 12,
@@ -293,16 +288,16 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     height: "100%",
-    color: "#FFFFFF",
+    color: "#1A1C24",
     fontSize: 16,
   },
   passwordHint: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 16,
   },
   hintText: {
-    color: '#888',
+    color: "#888888",
     fontSize: 14,
     marginLeft: 8,
   },
@@ -332,72 +327,51 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   dividerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginVertical: 20,
   },
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#333',
+    backgroundColor: "#E0E0E0",
   },
   dividerText: {
-    color: '#888',
+    color: "#888888",
     paddingHorizontal: 10,
     fontSize: 14,
   },
-  socialContainer: {
-    marginBottom: 32,
-  },
-  socialText: {
-    color: '#AAAAAA',
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  socialButtons: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 16,
-  },
-  socialButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#252833',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   footer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 24,
   },
   footerText: {
-    color: '#AAAAAA',
+    color: "#666666",
     marginBottom: 12,
   },
   loginButton: {
-    width: '100%',
+    width: "100%",
     backgroundColor: "transparent",
     borderRadius: 12,
     height: 56,
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#fff",
+    borderWidth: 0.3,
+    borderColor: "#3391FF",
   },
   loginButtonText: {
-    color: "#FFFFFF",
+    color: "#3391FF",
     fontSize: 16,
     fontWeight: "600",
   },
   termsText: {
-    color: '#888',
-    textAlign: 'center',
+    color: "#888888",
+    textAlign: "center",
     fontSize: 12,
     marginTop: 16,
   },
   linkText: {
-    color: '#3391FF',
+    color: "#3391FF",
   },
 });
 

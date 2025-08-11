@@ -2,7 +2,7 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet } from "react-native";
 
-const BackButton = ({ color = "#fff", size = 24, style }) => {
+const BackButton = ({ color = "#000000ff", size = 24, style }) => {
   const router = useRouter();
 
   return (

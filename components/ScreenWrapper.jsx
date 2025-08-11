@@ -8,7 +8,7 @@ const ScreenWrapper = ({ children }) => (
 const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
-    backgroundColor: "#000000",
+    backgroundColor: "#ffffffff",
   },
 });
 

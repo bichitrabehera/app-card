@@ -11,7 +11,7 @@ import {
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
-  ScrollView
+  ScrollView,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import { useRouter } from "expo-router";
@@ -45,7 +45,7 @@ const Login = () => {
     }
   };
 
-return(
+  return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
@@ -55,9 +55,10 @@ return(
           <View style={styles.innerContainer}>
             {/* Logo and Header Section */}
             <View style={styles.header}>
-            
               <Text style={styles.title}>Welcome Back</Text>
-              <Text style={styles.subtitle}>Sign in to access your TapCard account</Text>
+              <Text style={styles.subtitle}>
+                Sign in to access your TapCard account
+              </Text>
             </View>
 
             {/* Form Section */}
@@ -104,7 +105,7 @@ return(
                 />
               </View>
 
-              <Pressable 
+              <Pressable
                 style={styles.forgotPassword}
                 onPress={() => router.push("/auth/forgot-password")}
               >
@@ -140,14 +141,12 @@ return(
                 <Text style={styles.dividerText}>OR CONTINUE WITH</Text>
                 <View style={styles.dividerLine} />
               </View>
-
-              
             </View>
 
             {/* Footer Section */}
             <View style={styles.footer}>
-                        <Text style={styles.footerText}>Dont have a account?</Text>
-              
+              <Text style={styles.footerText}>Dont have a account?</Text>
+
               <Pressable
                 onPress={() => router.push("/auth/register")}
                 style={({ pressed }) => [
@@ -168,18 +167,18 @@ return(
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#1A1C24",
+    backgroundColor: "#FFFFFF",
   },
   scrollContainer: {
     flexGrow: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   innerContainer: {
     paddingHorizontal: 24,
     paddingVertical: 40,
   },
   header: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 40,
   },
   logo: {
@@ -191,12 +190,12 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "700",
     marginBottom: 8,
-    color: "#FFFFFF",
+    color: "#1F2937", // deep gray for text
     textAlign: "center",
   },
   subtitle: {
     fontSize: 16,
-    color: "#AAAAAA",
+    color: "#6B7280", // softer gray
     textAlign: "center",
     marginBottom: 8,
   },
@@ -206,8 +205,8 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#2A2C33",
-    borderColor: "#333",
+    backgroundColor: "#F9FAFB",
+    borderColor: "#E5E7EB",
     borderWidth: 1,
     borderRadius: 12,
     paddingHorizontal: 16,
@@ -215,37 +214,39 @@ const styles = StyleSheet.create({
   },
   icon: {
     marginRight: 12,
+    color: "#9CA3AF",
   },
   input: {
     flex: 1,
     height: 56,
-    color: "#FFFFFF",
+    color: "#111827", // black text
     fontSize: 16,
   },
   forgotPassword: {
-    alignSelf: 'flex-end',
+    alignSelf: "flex-end",
     marginBottom: 16,
   },
   forgotPasswordText: {
-    color: '#3391FF',
+    color: "#2563EB",
     fontSize: 14,
+    fontWeight: "500",
   },
   error: {
-    color: "#FF3B30",
+    color: "#DC2626",
     textAlign: "center",
     marginBottom: 16,
     fontSize: 14,
     fontWeight: "500",
   },
   btn: {
-    backgroundColor: "#3391FF",
+    backgroundColor: "#2563EB",
     borderRadius: 12,
     height: 56,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#007BFF",
+    shadowColor: "#2563EB",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 3,
   },
@@ -258,52 +259,53 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   dividerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginVertical: 5,
   },
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#333',
+    backgroundColor: "#E5E7EB",
   },
   dividerText: {
-    color: '#888',
+    color: "#9CA3AF",
     paddingHorizontal: 10,
     fontSize: 12,
+    fontWeight: "500",
   },
   socialButtons: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
     gap: 16,
   },
   socialButton: {
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#252833',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#F3F4F6",
+    justifyContent: "center",
+    alignItems: "center",
   },
   footer: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   footerText: {
-    color: '#AAAAAA',
+    color: "#6B7280",
     marginBottom: 12,
   },
   register: {
-    width: '100%',
+    width: "100%",
     backgroundColor: "transparent",
     borderRadius: 12,
     height: 56,
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#fff",
+    borderWidth: 0.3,
+    borderColor: "#2563EB",
   },
   registerText: {
-    color: "#FFFFFF",
+    color: "#2563EB",
     fontSize: 16,
     fontWeight: "600",
   },

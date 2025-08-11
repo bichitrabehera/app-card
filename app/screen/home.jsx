@@ -3,7 +3,7 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
+  Pressable,
   ActivityIndicator,
   Share,
   Alert,
@@ -24,9 +24,7 @@ export default function Home() {
   const qrRef = useRef();
 
   useEffect(() => {
-    if (token) {
-      fetchProfile();
-    }
+    if (token) fetchProfile();
   }, [token]);
 
   const fetchProfile = async () => {
@@ -35,33 +33,29 @@ export default function Home() {
         headers: { Authorization: `Bearer ${token}` },
       });
       setProfile(res.data);
-    } catch (error) {
-      console.error(
-        "Error fetching profile:",
-        error.response?.data || error.message
-      );
+    } catch (e) {
+      console.error("Error fetching profile:", e.response?.data || e.message);
     } finally {
       setLoading(false);
     }
   };
 
   const downloadQR = async () => {
+    const { status } = await MediaLibrary.requestPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+        "Permission required",
+        "We need gallery access to save the QR."
+      );
+      return;
+    }
     try {
-      const { status } = await MediaLibrary.requestPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert(
-          "Permission required",
-          "We need access to save images to your gallery"
-        );
-        return;
-      }
-
       const uri = await captureRef(qrRef, { format: "png", quality: 1 });
       await MediaLibrary.saveToLibraryAsync(uri);
-      Alert.alert("Success", "QR code saved to your gallery");
-    } catch (error) {
-      console.error("Error saving QR:", error);
-      Alert.alert("Error", "Failed to save QR code");
+      Alert.alert("Saved!", "QR code saved to your gallery.");
+    } catch (e) {
+      console.error("Error saving QR:", e);
+      Alert.alert("Error", "Failed to save QR code.");
     }
   };
 
@@ -69,19 +63,19 @@ export default function Home() {
     try {
       const uri = await captureRef(qrRef, { format: "png", quality: 0.8 });
       await Share.share({
-        message: `Connect with me on TapCard: ${API_URL}/user/${profile.id}`,
+        message: `Connect with me: ${API_URL}/user/${profile.id}`,
         url: uri,
-        title: "My TapCard QR",
+        title: "TapCard QR",
       });
-    } catch (error) {
-      console.error("Error sharing:", error);
+    } catch (e) {
+      console.error("Error sharing:", e);
     }
   };
 
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#2b74e2" />
+        <ActivityIndicator size="large" color="#1976D2" />
       </View>
     );
   }
@@ -93,148 +87,161 @@ export default function Home() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.brandHeader}>
-        <Text style={styles.brandName}>TapCard</Text>
+      <View style={styles.header}>
+        {/* <Text style={styles.brandName}>TapCard</Text> */}
       </View>
+
       <Text style={styles.title}>My QR Code</Text>
 
-      {/* Card with full height and spacing */}
       <View style={styles.card} ref={qrRef} collapsable={false}>
-        {/* Top section */}
-        <Text style={styles.name}>{profile.username}</Text>
-
-        {/* Middle QR */}
+        <Text style={styles.username}>@{profile.username}</Text>
         <QRCode
           value={`${API_URL}/user/${profile.id}`}
-          size={250}
-          color="#fff"
+          size={200}
+          color="#2C2E2F"
           backgroundColor="transparent"
         />
-
-        {/* Bottom section */}
-        <View style={{ alignItems: "center", width: "100%" }}>
-          <View style={styles.emailTag}>
-            <Text style={styles.emailText}>{profile.email}</Text>
-          </View>
-
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>
-              Joined {new Date(profile.created_at).getFullYear()}
-            </Text>
-            <Text style={styles.footerText}>tapcard</Text>
-          </View>
+        <View style={styles.emailTag}>
+          <Text style={styles.email}>{profile.email}</Text>
+        </View>
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>
+            Joined {new Date(profile.created_at).getFullYear()}
+          </Text>
+          <Text style={styles.footerText}>tapcard</Text>
         </View>
       </View>
 
-      {/* Bottom buttons */}
       <View style={styles.actions}>
-        <TouchableOpacity style={styles.button} onPress={shareQR}>
-          <Ionicons name="share-outline" size={20} color="#fff" />
-          <Text style={styles.buttonText}>Share</Text>
-        </TouchableOpacity>
+        <Pressable
+          style={({ pressed }) => [
+            styles.actionLink,
+            pressed && { backgroundColor: "#E3F2FD" },
+          ]}
+          onPress={shareQR}
+        >
+          <Ionicons name="share-outline" size={20} color="#1976D2" />
+          <Text style={styles.actionText}>Share</Text>
+        </Pressable>
 
-        <TouchableOpacity style={styles.button} onPress={downloadQR}>
-          <Ionicons name="download-outline" size={20} color="#fff" />
-          <Text style={styles.buttonText}>Download</Text>
-        </TouchableOpacity>
+        <Pressable
+          style={({ pressed }) => [
+            styles.actionLink,
+            pressed && { backgroundColor: "#E3F2FD" },
+          ]}
+          onPress={downloadQR}
+        >
+          <Ionicons name="download-outline" size={20} color="#1976D2" />
+          <Text style={styles.actionText}>Download</Text>
+        </Pressable>
       </View>
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#000",
-    paddingHorizontal: 16,
-    // paddingTop: 16,
-    paddingBottom: 24,
-  },
-  brandHeader: {
-    paddingTop: 24,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#1a1a1a",
-  },
-  brandName: {
-    fontSize: 30,
-    fontFamily: "cursive",
-    color: "#ffffffff",
-    textAlign: "left",
-    fontWeight: "bold",
-    marginLeft: 20,
-  },
-  title: {
-    color: "#fff",
-    fontSize: 18,
-    textAlign: "center",
-    marginBottom: 20,
-    marginTop:20,
-    fontWeight: "600",
-  },
-  center: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor:"#ffffff"
-  },
-  card: {
-    // flex: 1,
-    backgroundColor: "#111",
-    borderRadius: 20,
-    padding: 20,
-    alignItems: "center",
+    backgroundColor: "#F5F8FC", // ultra light blue
+    paddingHorizontal: 20,
+    paddingTop: 30,
     justifyContent: "space-between",
-    marginBottom: 20,
   },
-  name: {
-    color: "#fff",
+
+  // Inside your stylesheet
+  card: {
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    paddingVertical: 24,
+    paddingHorizontal: 20,
+    alignItems: "center",
+    marginVertical: 20,
+  },
+
+  username: {
     fontSize: 20,
     fontWeight: "600",
-    padding: 20,
+    color: "#2C2E2F",
+    marginBottom: 16,
+    fontFamily: "System", // or your premium font
   },
+
   emailTag: {
-    backgroundColor: "#000",
-    paddingHorizontal: 12,
+    marginTop: 16,
+    backgroundColor: "#f1f5f9",
     paddingVertical: 6,
-    borderRadius: 6,
-    marginTop: 20,
-    // padding: 20,
+    paddingHorizontal: 12,
+    borderRadius: 12,
   },
-  emailText: {
-    color: "#fff",
+
+  email: {
     fontSize: 14,
+    color: "#4b5563",
+    fontWeight: "500",
   },
+
   footer: {
-    marginTop: 12,
+    marginTop: 20,
     flexDirection: "row",
     justifyContent: "space-between",
     width: "100%",
-    borderTopWidth: 0.5,
-    borderTopColor: "#333",
-    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: "#e5e7eb",
+    paddingTop: 12,
   },
+
   footerText: {
-    color: "#888",
     fontSize: 12,
+    color: "#6b7280",
+    fontWeight: "500",
   },
+
+  brandHeader: {
+    alignItems: "center",
+    paddingVertical: 10,
+  },
+  brandName: {
+    fontSize: 36,
+    // fontWeight: "800",
+    color: "#000000ff",
+    letterSpacing: 0.5,
+    fontFamily: "cursive",
+    fontWeight: "bold",
+  },
+
+  title: {
+    fontSize: 22,
+    fontWeight: "400",
+    color: "#000000ff",
+    textAlign: "center",
+    marginVertical: 20,
+  },
+
+  emailText: {
+    fontSize: 14,
+    color: "#334155",
+  },
+
+  // Sticky Action Bar
   actions: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "space-evenly",
+    paddingVertical: 14,
+    borderRadius: 20,
+    marginBottom: 100,
   },
-  button: {
-    flex: 1,
+
+  actionLink: {
     flexDirection: "row",
-    justifyContent: "center",
     alignItems: "center",
-    paddingVertical: 16,
-    backgroundColor: "#111",
+    paddingVertical: 10,
+    paddingHorizontal: 18,
     borderRadius: 12,
-    marginHorizontal: 6,
+    backgroundColor: "#E8F4FB",
   },
-  buttonText: {
-    color: "#fff",
+  actionText: {
+    color: "#0070BA",
+    fontSize: 16,
+    fontWeight: "600",
     marginLeft: 8,
-    fontWeight: "500",
   },
 });

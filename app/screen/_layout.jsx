@@ -1,32 +1,46 @@
 import { Tabs } from "expo-router";
-import { Feather } from "@expo/vector-icons"; // ✅ Use Feather
+import { Feather } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
 import ScreenWrapper from "../../components/ScreenWrapper";
+import { Text } from "react-native";
 
 export default function Layout() {
   return (
     <>
       <ScreenWrapper>
-        <StatusBar style="light" />
+        <StatusBar style="dark" />
 
         <Tabs
           screenOptions={{
             headerShown: false,
-            // tabBarShowLabel: false, // 🔕 Hide labels
+            tabBarShowLabel: true,
+            tabBarLabel: ({ focused, color }) => (
+              <Text
+                style={{
+                  fontSize: 13,
+                  fontWeight: focused ? "600" : "400",
+                  fontFamily: "System", // ✅ clean default font
+                  color,
+                }}
+              >
+                {focused ? "● " : ""} {/* Optional bullet for active tab */}
+              </Text>
+            ),
             tabBarStyle: {
-              backgroundColor: "#000000",
-              // borderTopColor: "#000000ff",
+              backgroundColor: "#fff",
+              borderTopColor: "#e5e5e5",
               elevation: 0,
-              height: 60,
+              height: 80,
+              paddingTop: 6,
             },
-            tabBarActiveTintColor: "#37b6e9ff",
-            tabBarInactiveTintColor: "#888888",
+            tabBarActiveTintColor: "#37b6e9",
+            tabBarInactiveTintColor: "#888",
             tabBarItemStyle: {
               paddingVertical: 4,
             },
           }}
           sceneContainerStyle={{
-            backgroundColor: "#000000",
+            backgroundColor: "#fff",
           }}
         >
           <Tabs.Screen
@@ -35,6 +49,7 @@ export default function Layout() {
               tabBarIcon: ({ color, size }) => (
                 <Feather name="home" size={size} color={color} />
               ),
+              tabBarLabel: "Home",
             }}
           />
           <Tabs.Screen
@@ -43,6 +58,7 @@ export default function Layout() {
               tabBarIcon: ({ color, size }) => (
                 <Feather name="camera" size={size} color={color} />
               ),
+              tabBarLabel: "Scan",
             }}
           />
           <Tabs.Screen
@@ -51,6 +67,7 @@ export default function Layout() {
               tabBarIcon: ({ color, size }) => (
                 <Feather name="user" size={size} color={color} />
               ),
+              tabBarLabel: "Profile",
             }}
           />
         </Tabs>
