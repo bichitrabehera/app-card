@@ -16,7 +16,12 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.yourcollege.tapapp",
+      "versionCode": 1,
+      "permissions": [
+        "android.permission.CAMERA"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -34,11 +39,21 @@
           "backgroundColor": "#ffffff"
         }
       ],
-      "expo-secure-store",
-      "expo-barcode-scanner"
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "updates": {
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "fb9268cd-b58c-4af4-b4fa-1fb560855b67"
+      }
     }
   }
 }

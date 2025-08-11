@@ -8,15 +8,12 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Alert,
-  Image,
 } from "react-native";
 import axios from "axios";
 import { API_URL } from "../../constants/api";
 import BackButton from "../../components/BackButton";
 import { AuthContext } from "../context/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
-
-const DEFAULT_AVATAR = "https://i.imgur.com/mCHMpLT.png";
 
 export default function EditProfile() {
   const { token } = useContext(AuthContext);
@@ -168,7 +165,6 @@ export default function EditProfile() {
       <ScrollView contentContainerStyle={styles.content}>
         {/* Profile Info Row */}
         <View style={styles.profileCard}>
-         
           <View style={styles.profileDetails}>
             <TextInput
               style={styles.input}
